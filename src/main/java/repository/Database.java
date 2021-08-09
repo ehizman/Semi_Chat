@@ -18,4 +18,6 @@ public interface Database<K> {
         Optional<K> findById(String storableId);
 
         Optional<K> findByName(String receiverBank);
+
+        void deleteAll();//implemented for the sole purpose of clearing the database after each test
 }

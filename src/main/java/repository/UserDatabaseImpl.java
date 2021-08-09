@@ -2,7 +2,6 @@ package repository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 public class UserDatabaseImpl<K extends Storable> implements Database<K>{
@@ -44,7 +43,18 @@ public class UserDatabaseImpl<K extends Storable> implements Database<K>{
     }
 
     @Override
-    public Optional<K> findByName(String receiverBank) {
+    public Optional<K> findByName(String suppliedInput) {
+        for(K k : dataStore){
+            if(k.getName().contains(suppliedInput)){
+                return Optional.of(k);
+            }
+        }
         return Optional.empty();
+    }
+
+    //implemented for the sole purpose of clearing the database after each test
+    @Override
+    public void deleteAll() {
+        dataStore.clear();
     }
 }

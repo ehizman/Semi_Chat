@@ -6,11 +6,11 @@ import models.User;
 import repository.Database;
 import repository.UserDatabaseImpl;
 
-public class RegisterService {
+public class UserService {
     @Getter
     private final Database<User> userDatabase;
 
-    private RegisterService(){
+    private UserService(){
         this.userDatabase = new UserDatabaseImpl<>();
     }
     public  User registerNative(String firstName, String lastName, String email) {
@@ -19,11 +19,11 @@ public class RegisterService {
         return user;
     }
 
-    public static class RegisterSingletonHelper{
-        private static final RegisterService instance = new RegisterService();
+    public static class UserServiceSingletonHelper {
+        private static final UserService instance = new UserService();
     }
 
-    public static RegisterService createSingletonOfRegisterService(){
-        return RegisterSingletonHelper.instance;
+    public static UserService createSingletonOfUserService(){
+        return UserServiceSingletonHelper.instance;
     }
 }
