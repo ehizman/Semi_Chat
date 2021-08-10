@@ -20,4 +20,6 @@ public interface Database<K> {
         Optional<K> findByName(String receiverBank);
 
         void deleteAll();//implemented for the sole purpose of clearing the database after each test
+
+        Optional<List<K>> findAllByUserName(String namePattern);
 }

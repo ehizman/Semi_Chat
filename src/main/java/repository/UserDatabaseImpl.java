@@ -57,4 +57,20 @@ public class UserDatabaseImpl<K extends Storable> implements Database<K>{
     public void deleteAll() {
         dataStore.clear();
     }
+
+    @Override
+    public Optional<List<K>> findAllByUserName(String namePattern) {
+        List<K> listOfUserNamesThatContainNamePattern = new ArrayList<>();
+        for (K k : dataStore){
+            if (k.getName().contains(namePattern)){
+                listOfUserNamesThatContainNamePattern.add(k);
+            }
+        }
+        if (listOfUserNamesThatContainNamePattern.size() != 0){
+            return Optional.of(listOfUserNamesThatContainNamePattern);
+        }
+        else{
+            return Optional.empty();
+        }
+    }
 }

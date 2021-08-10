@@ -1,10 +1,14 @@
 package services;
 
+import exceptions.UserDoesNotExistException;
 import lombok.Getter;
 import models.Native;
 import models.User;
 import repository.Database;
 import repository.UserDatabaseImpl;
+
+import java.util.List;
+import java.util.Optional;
 
 public class UserService {
     @Getter
@@ -19,11 +23,19 @@ public class UserService {
         return user;
     }
 
+    public List<User> find(String namePattern) {
+        Optional<List<User>> users =  userDatabase.findAllByUserName(namePattern);
+        if (users.isEmpty()){
+            throw new UserDoesNotExistException("No user found!");
+        }
+        return users.get();
+    }
+
     public static class UserServiceSingletonHelper {
         private static final UserService instance = new UserService();
     }
 
-    public static UserService createSingletonOfUserService(){
+    public static UserService getInstance(){
         return UserServiceSingletonHelper.instance;
     }
 }
