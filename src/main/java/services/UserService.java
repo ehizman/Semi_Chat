@@ -31,7 +31,7 @@ public class UserService {
         return users.get();
     }
 
-    public static class UserServiceSingletonHelper {
+    private static class UserServiceSingletonHelper {
         private static final UserService instance = new UserService();
     }
 
