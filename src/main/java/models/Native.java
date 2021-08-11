@@ -15,6 +15,6 @@ public class Native extends User {
 
     @Override
     public String getName() {
-        return this.getFirstName() + getLastName();
+        return getFirstName() + " " + getLastName();
     }
 }

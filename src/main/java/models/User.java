@@ -3,16 +3,18 @@ package models;
 import lombok.Getter;
 import repository.Storable;
 
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class User implements Storable {
-    private final String id = UUID.randomUUID().toString();
     @Getter
     private String firstName;
     @Getter
     private String lastName;
     @Getter
     private String email;
+    @Getter
+    private List<Message> inbox = new ArrayList<>();
 
     public User(String firstName, String lastName, String email) {
         this.firstName = firstName;
@@ -30,5 +32,12 @@ public abstract class User implements Storable {
 
     public void updateUserEmail(String email){
         this.email = email;
+    }
+
+    public void updateInbox(Message message){
+        this.inbox.add(message);
+    }
+    public String readMessage(int messageIndex){
+        return inbox.get(messageIndex).toString();
     }
 }
