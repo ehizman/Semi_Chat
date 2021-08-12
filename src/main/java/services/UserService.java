@@ -6,6 +6,7 @@ import exceptions.UserDoesNotExistException;
 import lombok.Getter;
 import models.Message;
 import models.Native;
+import models.RequestStatus;
 import models.User;
 import repository.Database;
 import repository.UserDatabaseImpl;
@@ -39,7 +40,7 @@ public class UserService {
         Optional<User> optionalSender = userDatabase.findById(senderId);
         if (optionalSender.isPresent()){
             String senderName = optionalSender.get().getName();
-            RequestObject requestObject = new RequestObject(senderName);
+            RequestObject requestObject = new RequestObject(senderName, senderId, receiverId);
             Optional<User> optionalReceiver = userDatabase.findById(receiverId);
             if (optionalReceiver.isPresent()){
                 User receiver = optionalReceiver.get();
@@ -52,12 +53,15 @@ public class UserService {
         else{
             throw new FriendRequestSenderIdDoesNotExistException("Friend request sender does not exist");
         }
-
-
     }
 
     private void messageDispatcher(User receiver, RequestObject friendRequest) {
         receiver.updateInbox(friendRequest);
+    }
+
+    public void friendMatcher(Message<RequestObject> requestObject) {
+        User sender = userDatabase.findById(requestObject.getSenderId()).get();
+        sender.getFriendList().add(requestObject.getReceiverId());
     }
 
     private static class UserServiceSingletonHelper {
@@ -68,19 +72,29 @@ public class UserService {
         return UserServiceSingletonHelper.instance;
     }
 
-    private static class RequestObject extends Message {
+    private final static class RequestObject implements Message {
         private final String senderName;
+        @Getter
+        private final String senderId;
+        @Getter
+        private final String receiverId;
         private final LocalDateTime timeSent;
-        private RequestObject(String senderName){
+        @Getter
+        private final RequestStatus requestStatus = RequestStatus.PENDING;
+        
+        private RequestObject(String senderName, String senderId, String receiverId){
             this.senderName = senderName;
             this.timeSent = LocalDateTime.now();
+            this.senderId = senderId;
+            this.receiverId = receiverId;
         }
+
         public String toString(){
-            int year = LocalDateTime.now().getYear();
-            int month = LocalDateTime.now().getMonthValue();
-            int day = LocalDateTime.now().getDayOfMonth();
-            int hour = LocalDateTime.now().getHour();
-            int minute = LocalDateTime.now().getMinute();
+            int year = timeSent.getYear();
+            int month = timeSent.getMonthValue();
+            int day = timeSent.getDayOfMonth();
+            int hour = timeSent.getHour();
+            int minute = timeSent.getMinute();
             return String.format("You have received a friend request from %s at %s", senderName, String.format("%d-%d-%d:%02d:%02d",year, month, day, hour, minute));
         }
     }

@@ -2,6 +2,7 @@ package models;
 
 import lombok.Getter;
 import repository.Storable;
+import services.UserService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,8 @@ public abstract class User implements Storable {
     private String email;
     @Getter
     private List<Message> inbox = new ArrayList<>();
+    @Getter
+    private List<String> friendList = new ArrayList<>();
 
     public User(String firstName, String lastName, String email) {
         this.firstName = firstName;
@@ -39,5 +42,18 @@ public abstract class User implements Storable {
     }
     public String readMessage(int messageIndex){
         return inbox.get(messageIndex).toString();
+    }
+
+    void handleRequests(Message requestObject, RequestStatus requestStatus){
+        if (requestStatus == RequestStatus.ACCEPTED) {
+            UserService userService = UserService.getInstance();
+            friendList.add(requestObject.getSenderId());
+            userService.friendMatcher(requestObject);
+        }
+        else{
+            if (requestStatus == RequestStatus.REJECTED){
+                friendList.remove(requestObject);
+            }
+        }
     }
 }

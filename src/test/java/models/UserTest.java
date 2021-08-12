@@ -75,6 +75,26 @@ class UserTest {
                         "Magul at "+ formattedTime);
     }
 
+    @Test
+    void test_ThatUserCanAcceptFriendRequestsAndAddFriends(){
+        User sender = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com");
+        User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com");
+        userService.sendFriendRequest(sender.getId(), receiver.getId());
+        receiver.handleRequests(receiver.getInbox().get(0), RequestStatus.ACCEPTED);
+        assertThat(receiver.getId()).isIn(sender.getFriendList());
+        assertThat(sender.getId()).isIn(receiver.getFriendList());
+    }
+
+    @Test
+    void test_ThatUserCanRejectFriendRequest(){
+        User sender = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com");
+        User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com");
+        userService.sendFriendRequest(sender.getId(), receiver.getId());
+        receiver.handleRequests(receiver.getInbox().get(0), RequestStatus.REJECTED);
+        assertThat(receiver.getFriendList()).doesNotContain(sender.getId());
+        assertThat(receiver.getFriendList()).isEmpty();
+    }
+
     @AfterEach
     void tearDown(){
         userService.getUserDatabase().deleteAll();
