@@ -1,7 +1,6 @@
 package services;
 
-import exceptions.FriendRequestReceiverIdDoesNotExistException;
-import exceptions.FriendRequestSenderIdDoesNotExistException;
+import exceptions.FriendRequestException;
 import exceptions.UserDoesNotExistException;
 import lombok.Getter;
 import models.Message;
@@ -29,7 +28,7 @@ public class UserService {
     }
 
     public List<User> find(String namePattern) {
-        Optional<List<User>> users =  userDatabase.findAllByUserName(namePattern);
+        Optional<List<User>> users =  userDatabase.findAllByName(namePattern);
         if (users.isEmpty()){
             throw new UserDoesNotExistException("No user found!");
         }
@@ -43,20 +42,20 @@ public class UserService {
             RequestObject requestObject = new RequestObject(senderName, senderId, receiverId);
             Optional<User> optionalReceiver = userDatabase.findById(receiverId);
             if (optionalReceiver.isPresent()){
-                User receiver = optionalReceiver.get();
-                messageDispatcher(receiver, requestObject);
+                sendFriendRequest(requestObject, optionalReceiver.get());
             }
             else{
-                throw new FriendRequestReceiverIdDoesNotExistException("Friend request receiver id does not exist");
+                throw new FriendRequestException("Friend request receiver id does not exist");
             }
         }
         else{
-            throw new FriendRequestSenderIdDoesNotExistException("Friend request sender does not exist");
+            throw new FriendRequestException("Friend request sender does not exist");
         }
     }
 
-    private void messageDispatcher(User receiver, RequestObject friendRequest) {
-        receiver.updateInbox(friendRequest);
+    private void sendFriendRequest(RequestObject requestObject, User receiver) {
+        FriendRequestDispatcher friendRequestDispatcher = new FriendRequestDispatcher();
+        friendRequestDispatcher.send(receiver, requestObject);
     }
 
     public void friendMatcher(Message<RequestObject> requestObject) {

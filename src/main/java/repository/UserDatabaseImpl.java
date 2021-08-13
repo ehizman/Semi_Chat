@@ -58,7 +58,7 @@ public class UserDatabaseImpl<K extends Storable> implements Database<K>{
     }
 
     @Override
-    public Optional<List<K>> findAllByUserName(String namePattern) {
+    public Optional<List<K>> findAllByName(String namePattern) {
         List<K> listOfUserNamesThatContainNamePattern = new ArrayList<>();
         for (K k : dataStore){
             if (k.getName().contains(namePattern)){
