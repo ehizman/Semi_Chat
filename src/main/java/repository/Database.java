@@ -21,5 +21,5 @@ public interface Database<K> {
 
         void deleteAll();//implemented for the sole purpose of clearing the database after each test
 
-        Optional<List<K>> findAllByUserName(String namePattern);
+        Optional<List<K>> findAllByName(String namePattern);
 }

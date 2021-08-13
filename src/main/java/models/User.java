@@ -37,7 +37,7 @@ public abstract class User implements Storable {
         this.email = email;
     }
 
-    public void updateInbox(Message message){
+    public void updatePendingFriendRequests(Message message){
         this.friendRequests.add(message);
     }
     public String readMessage(int messageIndex){
