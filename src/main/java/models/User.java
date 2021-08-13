@@ -15,9 +15,9 @@ public abstract class User implements Storable {
     @Getter
     private String email;
     @Getter
-    private List<Message> inbox = new ArrayList<>();
+    private final List<Message> friendRequests = new ArrayList<>();
     @Getter
-    private List<String> friendList = new ArrayList<>();
+    private final List<String> friendList = new ArrayList<>();
 
     public User(String firstName, String lastName, String email) {
         this.firstName = firstName;
@@ -38,10 +38,10 @@ public abstract class User implements Storable {
     }
 
     public void updateInbox(Message message){
-        this.inbox.add(message);
+        this.friendRequests.add(message);
     }
     public String readMessage(int messageIndex){
-        return inbox.get(messageIndex).toString();
+        return friendRequests.get(messageIndex).toString();
     }
 
     void handleRequests(Message requestObject, RequestStatus requestStatus){

@@ -62,16 +62,16 @@ class UserTest {
     @Test
     void test_UserCanSendFriendRequests(){
         User user = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com");
-        User user2 = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com");
-        userService.sendFriendRequest(user.getId(), user2.getId());
-        assertThat(user2.getInbox().size()).isEqualTo(1);
+        User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com");
+        userService.sendFriendRequest(user.getId(), receiver.getId());
+        assertThat(receiver.getFriendRequests().size()).isEqualTo(1);
         int year = LocalDateTime.now().getYear();
         int month = LocalDateTime.now().getMonthValue();
         int day = LocalDateTime.now().getDayOfMonth();
         int hour = LocalDateTime.now().getHour();
         int minute = LocalDateTime.now().getMinute();
         String formattedTime = String.format("%d-%d-%d:%02d:%02d",year, month, day, hour, minute);
-        assertThat(user2.readMessage(0)).contains("You have received a friend request from Eseosa " +
+        assertThat(receiver.readMessage(0)).contains("You have received a friend request from Eseosa " +
                         "Magul at "+ formattedTime);
     }
 
@@ -80,7 +80,7 @@ class UserTest {
         User sender = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com");
         User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com");
         userService.sendFriendRequest(sender.getId(), receiver.getId());
-        receiver.handleRequests(receiver.getInbox().get(0), RequestStatus.ACCEPTED);
+        receiver.handleRequests(receiver.getFriendRequests().get(0), RequestStatus.ACCEPTED);
         assertThat(receiver.getId()).isIn(sender.getFriendList());
         assertThat(sender.getId()).isIn(receiver.getFriendList());
     }
@@ -90,7 +90,7 @@ class UserTest {
         User sender = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com");
         User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com");
         userService.sendFriendRequest(sender.getId(), receiver.getId());
-        receiver.handleRequests(receiver.getInbox().get(0), RequestStatus.REJECTED);
+        receiver.handleRequests(receiver.getFriendRequests().get(0), RequestStatus.REJECTED);
         assertThat(receiver.getFriendList()).doesNotContain(sender.getId());
         assertThat(receiver.getFriendList()).isEmpty();
     }
