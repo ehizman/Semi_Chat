@@ -46,14 +46,18 @@ public abstract class User implements Storable {
 
     void handleRequests(Message requestObject, RequestStatus requestStatus){
         if (requestStatus == RequestStatus.ACCEPTED) {
-            UserService userService = UserService.getInstance();
-            friendList.add(requestObject.getSenderId());
-            userService.friendMatcher(requestObject);
+            addSenderToFriendListAndUpdateSenderFriendList(requestObject);
         }
         else{
             if (requestStatus == RequestStatus.REJECTED){
                 friendList.remove(requestObject);
             }
         }
+    }
+
+    private void addSenderToFriendListAndUpdateSenderFriendList(Message requestObject) {
+        UserService userService = UserService.getInstance();
+        friendList.add(requestObject.getSenderId());
+        userService.matchFriends(requestObject);
     }
 }

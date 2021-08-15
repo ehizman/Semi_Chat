@@ -28,29 +28,16 @@ public class UserService {
     }
 
     public List<User> find(String namePattern) {
-        Optional<List<User>> users =  userDatabase.findAllByName(namePattern);
-        if (users.isEmpty()){
-            throw new UserDoesNotExistException("No user found!");
-        }
-        return users.get();
+        return userDatabase.findAllByName(namePattern).orElseThrow(()-> new UserDoesNotExistException("No user found!"));
     }
 
     public void sendFriendRequest(String senderId, String receiverId) {
-        Optional<User> optionalSender = userDatabase.findById(senderId);
-        if (optionalSender.isPresent()){
-            String senderName = optionalSender.get().getName();
-            RequestObject requestObject = new RequestObject(senderName, senderId, receiverId);
-            Optional<User> optionalReceiver = userDatabase.findById(receiverId);
-            if (optionalReceiver.isPresent()){
-                sendFriendRequest(requestObject, optionalReceiver.get());
-            }
-            else{
-                throw new FriendRequestException("Friend request receiver id does not exist");
-            }
-        }
-        else{
-            throw new FriendRequestException("Friend request sender does not exist");
-        }
+        User sender = userDatabase.findById(senderId).orElseThrow(()-> new FriendRequestException("Friend request " +
+                "sender does not exist"));
+        String senderName = sender.getName();
+        RequestObject requestObject = new RequestObject(senderName, senderId, receiverId);
+        User receiver = userDatabase.findById(receiverId).orElseThrow(()-> new FriendRequestException("Friend request receiver id does not exist"));
+        sendFriendRequest(requestObject, receiver);
     }
 
     private void sendFriendRequest(RequestObject requestObject, User receiver) {
@@ -58,8 +45,9 @@ public class UserService {
         friendRequestDispatcher.send(receiver, requestObject);
     }
 
-    public void friendMatcher(Message<RequestObject> requestObject) {
-        User sender = userDatabase.findById(requestObject.getSenderId()).get();
+    public void matchFriends(Message<RequestObject> requestObject) {
+        User sender = userDatabase.findById(requestObject.getSenderId()).orElseThrow(()-> new UserDoesNotExistException(
+                "sender does not exist"));
         sender.getFriendList().add(requestObject.getReceiverId());
     }
 
@@ -71,7 +59,7 @@ public class UserService {
         return UserServiceSingletonHelper.instance;
     }
 
-    private final static class RequestObject implements Message {
+    private final static class RequestObject implements Message<RequestObject>{
         private final String senderName;
         @Getter
         private final String senderId;

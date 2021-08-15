@@ -6,7 +6,6 @@ import java.util.Optional;
 public interface Database<K> {
         void save(K k);
 
-
         boolean contains(K k);
 
         void delete(K k);
