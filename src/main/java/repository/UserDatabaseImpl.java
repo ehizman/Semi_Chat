@@ -1,14 +1,35 @@
 package repository;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import exceptions.UserException;
+import lombok.Getter;
+import models.User;
+import services.UserService;
+
+import java.util.*;
 
 public class UserDatabaseImpl<K extends Storable> implements Database<K>{
-    List<K> dataStore = new ArrayList<>();
+    private final List<K> dataStore;
+    @Getter
+    private final Set<String> emails;
+
+    private UserDatabaseImpl(){
+        this.dataStore = new ArrayList<>();
+        this.emails = new HashSet<>();
+    }
 
     @Override
     public void save(K k) {
         dataStore.add(k);
+    }
+    @Override
+    public void checkEmail(String email) {
+        if (emails.contains(email)){
+            throw new UserException("Email already exists");
+        }
+    }
+
+    @Override
+    public void addNewEmail(String email) {
+        emails.add(email);
     }
 
     @Override
@@ -44,7 +65,7 @@ public class UserDatabaseImpl<K extends Storable> implements Database<K>{
     @Override
     public Optional<K> findByName(String suppliedInput) {
         for(K k : dataStore){
-            if(k.getName().contains(suppliedInput)){
+            if(k.getName().contains(suppliedInput.toUpperCase())){
                 return Optional.of(k);
             }
         }
@@ -61,7 +82,7 @@ public class UserDatabaseImpl<K extends Storable> implements Database<K>{
     public Optional<List<K>> findAllByName(String namePattern) {
         List<K> listOfUserNamesThatContainNamePattern = new ArrayList<>();
         for (K k : dataStore){
-            if (k.getName().contains(namePattern)){
+            if (k.getName().contains(namePattern.toUpperCase())){
                 listOfUserNamesThatContainNamePattern.add(k);
             }
         }
@@ -71,5 +92,23 @@ public class UserDatabaseImpl<K extends Storable> implements Database<K>{
         else{
             return Optional.empty();
         }
+    }
+
+    @Override
+    public Optional<K> findByEmail(String email) {
+        for(K user : dataStore){
+            if (user.getEmail().equals(email.toLowerCase())){
+                return Optional.of(user);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static class UserDatabaseImplSingletonHelper{
+        final static UserDatabaseImpl<User> instance = new UserDatabaseImpl<>();
+    }
+
+    public static UserDatabaseImpl<?> getInstance(){
+        return UserDatabaseImplSingletonHelper.instance;
     }
 }
