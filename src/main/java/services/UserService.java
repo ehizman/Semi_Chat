@@ -1,7 +1,9 @@
 package services;
 
+import dto.RegisterDto;
 import exceptions.FriendRequestException;
-import exceptions.UserDoesNotExistException;
+import exceptions.UserException;
+import exceptions.UserLoginException;
 import lombok.Getter;
 import models.Message;
 import models.Native;
@@ -12,31 +14,49 @@ import repository.UserDatabaseImpl;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 public class UserService {
     @Getter
     private final Database<User> userDatabase;
 
+    @SuppressWarnings("unchecked")
     private UserService(){
-        this.userDatabase = new UserDatabaseImpl<>();
+        this.userDatabase = (Database<User>) UserDatabaseImpl.getInstance();
     }
-    public  User registerNative(String firstName, String lastName, String email) {
-        User user = new Native(firstName, lastName, email);
+
+    public  User registerNative(String firstName, String lastName, String email, String password) {
+        userDatabase.checkEmail(email);
+        userDatabase.addNewEmail(email);
+
+        RegisterDto registerDto = prettify(firstName, lastName, email,password);
+        User user = new Native(registerDto.getFirstName(), registerDto.getLastName(), registerDto.getEmail(),
+                registerDto.getPassword());
         userDatabase.save(user);
         return user;
     }
 
+    private RegisterDto prettify(String firstName, String lastName, String email, String password) {
+        firstName = firstName.toUpperCase();
+        lastName = lastName.toUpperCase();
+        email = email.toLowerCase();
+        RegisterDto registerDto = new RegisterDto(firstName, lastName, email, password);
+        return registerDto;
+    }
+
     public List<User> find(String namePattern) {
-        return userDatabase.findAllByName(namePattern).orElseThrow(()-> new UserDoesNotExistException("No user found!"));
+        return userDatabase.findAllByName(namePattern).orElseThrow(()-> new UserException("No user found!"));
     }
 
     public void sendFriendRequest(String senderId, String receiverId) {
         User sender = userDatabase.findById(senderId).orElseThrow(()-> new FriendRequestException("Friend request " +
                 "sender does not exist"));
+
         String senderName = sender.getName();
-        RequestObject requestObject = new RequestObject(senderName, senderId, receiverId);
+
         User receiver = userDatabase.findById(receiverId).orElseThrow(()-> new FriendRequestException("Friend request receiver id does not exist"));
+
+        RequestObject requestObject = new RequestObject(senderName, senderId, receiverId);
+
         sendFriendRequest(requestObject, receiver);
     }
 
@@ -46,9 +66,19 @@ public class UserService {
     }
 
     public void matchFriends(Message<RequestObject> requestObject) {
-        User sender = userDatabase.findById(requestObject.getSenderId()).orElseThrow(()-> new UserDoesNotExistException(
+        User sender = userDatabase.findById(requestObject.getSenderId()).orElseThrow(()-> new UserException(
                 "sender does not exist"));
         sender.getFriendList().add(requestObject.getReceiverId());
+    }
+
+    public boolean isValidLogin(String email, String password) {
+        User user = userDatabase.findByEmail(email).orElseThrow(()-> new UserLoginException("Invalid details"));
+        if (user.getPassword().equals(password)){
+            return true;
+        }
+        else{
+            throw new UserLoginException("Invalid login details");
+        }
     }
 
     private static class UserServiceSingletonHelper {

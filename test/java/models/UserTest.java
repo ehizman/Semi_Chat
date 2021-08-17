@@ -1,6 +1,6 @@
 package models;
 
-import exceptions.UserDoesNotExistException;
+import exceptions.UserException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,7 @@ class UserTest {
     }
     @Test
     void test_Constructor(){
-        User user = userService.registerNative("Ehis", "Edemakhiota", "ehizman@gmail.com");
+        User user = userService.registerNative("Ehis", "Edemakhiota", "ehizman@gmail.com", "Jesus123");
         assertAll(
                 ()-> assertEquals("Ehis", user.getFirstName()),
                 () -> assertEquals("Edemakhiota", user.getLastName()),
@@ -31,17 +31,17 @@ class UserTest {
 
     @Test
     void test_userCanRegister(){
-        User user = userService.registerNative("Ehis", "Edemakhiota", "edemaehiz@gmail.com");
-        User user2 = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com");
+        User user = userService.registerNative("Ehis", "Edemakhiota", "edemaehiz@gmail.com", "Jesus123");
+        User user2 = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com", "Jesus123");
         assertTrue(userService.getUserDatabase().contains(user));
         assertEquals(userService.getUserDatabase().size(), 2);
     }
 
     @Test
     void test_userCanFindOtherUsers(){
-        User user = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com");
-        User user2 = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com");
-        User user3 = userService.registerNative("Eseosa", "Nathan", "eseosaedemakhiota@gmail.com");
+        User user = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com", "Jesus123");
+        User user2 = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com", "Jesus123");
+        User user3 = userService.registerNative("Eseosa", "Nathan", "eseosaedemakhiota@gmail.com", "Jesus123");
 
         List<User> usersThatHaveSuppliedFieldInName = userService.find("Eseosa");
         assertAll(
@@ -54,15 +54,15 @@ class UserTest {
 
     @Test
     void test_UserNotFoundException_WhenUserDatabaseDoesNotContainNamePatternSuppliedByUser(){
-        User user = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com");
-        User user2 = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com");
-        assertThrows(UserDoesNotExistException.class, ()-> userService.find("Ehis"));
+        User user = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com", "Jesus123");
+        User user2 = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com", "Jesus123");
+        assertThrows(UserException.class, ()-> userService.find("Ehis"));
     }
 
     @Test
     void test_UserCanSendFriendRequests(){
-        User user = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com");
-        User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com");
+        User user = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com", "Jesus123");
+        User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com", "Jesus123");
         userService.sendFriendRequest(user.getId(), receiver.getId());
         assertThat(receiver.getFriendRequests().size()).isEqualTo(1);
         int year = LocalDateTime.now().getYear();
@@ -77,8 +77,8 @@ class UserTest {
 
     @Test
     void test_ThatUserCanAcceptFriendRequestsAndAddFriends(){
-        User sender = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com");
-        User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com");
+        User sender = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com", "Jesus123");
+        User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com", "Jesus123");
         userService.sendFriendRequest(sender.getId(), receiver.getId());
         receiver.handleRequests(receiver.getFriendRequests().get(0), RequestStatus.ACCEPTED);
         assertThat(receiver.getId()).isIn(sender.getFriendList());
@@ -87,8 +87,8 @@ class UserTest {
 
     @Test
     void test_ThatUserCanRejectFriendRequest(){
-        User sender = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com");
-        User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com");
+        User sender = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com", "Jesus123");
+        User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com", "Jesus123");
         userService.sendFriendRequest(sender.getId(), receiver.getId());
         receiver.handleRequests(receiver.getFriendRequests().get(0), RequestStatus.REJECTED);
         assertThat(receiver.getFriendList()).doesNotContain(sender.getId());

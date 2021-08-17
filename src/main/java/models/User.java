@@ -1,5 +1,6 @@
 package models;
 
+import lombok.Data;
 import lombok.Getter;
 import repository.Storable;
 import services.UserService;
@@ -7,22 +8,22 @@ import services.UserService;
 import java.util.ArrayList;
 import java.util.List;
 
+@Data
 public abstract class User implements Storable {
-    @Getter
     private String firstName;
-    @Getter
     private String lastName;
-    @Getter
     private String email;
-    @Getter
     private final List<Message> friendRequests = new ArrayList<>();
-    @Getter
     private final List<String> friendList = new ArrayList<>();
+    private final String password;
+    private boolean isLoggedIn;
 
-    public User(String firstName, String lastName, String email) {
+    public User(String firstName, String lastName, String email, String password) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
+        this.password = password;
+        this.isLoggedIn = true;
     }
 
     public void updateUserFirstName(String name){
@@ -60,4 +61,8 @@ public abstract class User implements Storable {
         friendList.add(requestObject.getSenderId());
         userService.matchFriends(requestObject);
     }
+
+    public abstract void login(String email, String password);
+
+    public abstract void logout();
 }

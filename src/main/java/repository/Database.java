@@ -1,9 +1,12 @@
 package repository;
-
 import java.util.List;
 import java.util.Optional;
 
 public interface Database<K> {
+        void checkEmail(String email);
+
+        void addNewEmail(String email);
+
         void save(K k);
 
         boolean contains(K k);
@@ -21,4 +24,6 @@ public interface Database<K> {
         void deleteAll();//implemented for the sole purpose of clearing the database after each test
 
         Optional<List<K>> findAllByName(String namePattern);
+
+        Optional<K> findByEmail(String email);
 }
