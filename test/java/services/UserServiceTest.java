@@ -8,8 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import repository.UserDatabaseImpl;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 class UserServiceTest {
     private UserService userService;
@@ -41,7 +40,7 @@ class UserServiceTest {
         String password = "Jesus123";
         userService = UserService.getInstance();
         User user = userService.registerNative(firstName, lastName, email, password);
-        assertThatThrownBy(()-> user.login(email, "Jesu123")).isInstanceOf(UserLoginException.class);
+        assertThatThrownBy(()-> userService.login(email, "Jesu123")).isInstanceOf(UserLoginException.class);
     }
 
     @Test
@@ -52,8 +51,21 @@ class UserServiceTest {
         String password = "Jesus123";
         userService = UserService.getInstance();
         User user = userService.registerNative(firstName, lastName, email, password);
-        user.logout();
+        userService.logout(user);
         assertThat(user.isLoggedIn()).isEqualTo(false);
+    }
+
+    @Test
+    void test_UserCanLoginAfterLoggingOut(){
+        String firstName = "Eseosa";
+        String lastName = "Edemakhiota";
+        String email = "edemaehiotaeseosa@gmail.com";
+        String password = "Jesus123";
+        userService = UserService.getInstance();
+        User user = userService.registerNative(firstName, lastName, email, password);
+        userService.logout(user);
+        userService.login("edemaehiotaeseosa@gmail.com", "Jesus123");
+        assertThat(user.isLoggedIn()).isEqualTo(true);
     }
 
     @Test
@@ -64,12 +76,12 @@ class UserServiceTest {
         String password = "Jesus123";
         userService = UserService.getInstance();
         User user = userService.registerNative(firstName, lastName, password, email);
-        user.logout();
-        assertThatThrownBy(user::logout).isInstanceOf(UserLoginException.class);
+        userService.logout(user);
+        assertThatThrownBy(()-> userService.logout(user)).isInstanceOf(UserLoginException.class);
     }
 
     @Test
-    void test_ThatUserSHaveUniqueEmail(){
+    void test_ThatUsersHaveUniqueEmail(){
         userService = UserService.getInstance();
         userService.registerNative("Ehis", "Edemakhiota",
                 "edemaehiz@gmail.com", "EdemaEhi17.");
