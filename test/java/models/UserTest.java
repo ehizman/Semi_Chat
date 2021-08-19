@@ -5,7 +5,7 @@ import exceptions.UserException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import repository.UserDatabaseImpl;
+import repository.DatabaseImpl;
 import services.UserService;
 
 import java.util.List;
@@ -15,12 +15,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class UserTest {
     private UserService userService;
-    private UserDatabaseImpl<?> userDatabase;
+    private DatabaseImpl<?> userDatabase;
 
     @BeforeEach
     void setUp(){
         userService = UserService.getInstance();
-        userDatabase = UserDatabaseImpl.getInstance();
+        userDatabase = DatabaseImpl.getInstance();
     }
 
     @Test

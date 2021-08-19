@@ -2,16 +2,15 @@ package repository;
 import exceptions.UserException;
 import lombok.Getter;
 import models.User;
-import services.UserService;
 
 import java.util.*;
 
-public class UserDatabaseImpl<K extends Storable> implements Database<K>{
+public class DatabaseImpl<K extends Storable> implements Database<K>{
     private final List<K> dataStore;
     @Getter
     private final Set<String> emails;
 
-    private UserDatabaseImpl(){
+    private DatabaseImpl(){
         this.dataStore = new ArrayList<>();
         this.emails = new HashSet<>();
     }
@@ -107,10 +106,10 @@ public class UserDatabaseImpl<K extends Storable> implements Database<K>{
     }
 
     private static class UserDatabaseImplSingletonHelper{
-        final static UserDatabaseImpl<User> instance = new UserDatabaseImpl<>();
+        final static DatabaseImpl<User> instance = new DatabaseImpl<>();
     }
 
-    public static UserDatabaseImpl<?> getInstance(){
+    public static DatabaseImpl<?> getInstance(){
         return UserDatabaseImplSingletonHelper.instance;
     }
 }

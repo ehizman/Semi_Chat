@@ -4,7 +4,6 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 
 public class ChatMessage implements Message{
     @Getter
@@ -20,8 +19,8 @@ public class ChatMessage implements Message{
 
 
     public ChatMessage(String senderName, String senderId, String receiverId, String messageBody){
-        this.chatMessage = messageBody;
         this.senderName = senderName;
+        this.chatMessage = messageBody;
         this.senderId = senderId;
         this.receiverId = receiverId;
         this.sendTime = LocalDateTime.now();

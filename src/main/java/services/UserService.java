@@ -8,19 +8,21 @@ import exceptions.UserLoginException;
 import lombok.Getter;
 import models.*;
 import repository.Database;
-import repository.UserDatabaseImpl;
+import repository.DatabaseImpl;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public class UserService {
     @Getter
     private final Database<User> userDatabase;
+    private final MessageService messageService;
+    private final FriendRequestService friendRequestService;
 
     @SuppressWarnings("unchecked")
     private UserService(){
-        this.userDatabase =(Database<User>) UserDatabaseImpl.getInstance();
+        this.userDatabase =(Database<User>) DatabaseImpl.getInstance();
+        this.messageService = new MessageService();
+        this.friendRequestService = new FriendRequestService();
     }
 
     public  User registerNative(String firstName, String lastName, String email, String password) {
@@ -51,13 +53,12 @@ public class UserService {
         return userDatabase.findAllByName(namePattern).orElseThrow(()-> new UserException("No user found!"));
     }
 
-
     public void sendFriendRequest(String senderId, String receiverId) {
-        User sender = checkIfUserExistsInDataBaseElseThrowException(senderId, "Friend request " +
+        User sender = checkIfUserExistsInDataBaseByIdElseThrowException(senderId, "Friend request " +
                 "sender does not exist");
 
-        User receiver = checkIfUserExistsInDataBaseElseThrowException(receiverId, "Friend request receiver id does not exist");
-
+        User receiver = checkIfUserExistsInDataBaseByIdElseThrowException(receiverId, "Friend request receiver " +
+                "id does not exist");
 
         if (sender.getFriendList().contains(receiverId)){
             throw new FriendRequestException("Receiver is already a friend");
@@ -68,16 +69,10 @@ public class UserService {
                 throw new FriendRequestException("Friend request has been sent already!");
             }
         }
-
-        String senderName = sender.getName();
-
-        FriendRequest requestObject = new FriendRequest(senderName, senderId, receiverId);
-
-        FriendRequestDispatcher friendRequestDispatcher = new FriendRequestDispatcher();
-        friendRequestDispatcher.send(receiver, requestObject);
+        friendRequestService.createFriendRequestAndDispatch(sender, receiver);
     }
 
-    private User checkIfUserExistsInDataBaseElseThrowException(String senderId, String exceptionMessage) {
+    private User checkIfUserExistsInDataBaseByIdElseThrowException(String senderId, String exceptionMessage) {
         return userDatabase.findById(senderId).orElseThrow(() -> new FriendRequestException(exceptionMessage));
     }
 
@@ -99,44 +94,31 @@ public class UserService {
     }
 
     public void sendChatMessage(String senderId, String receiverId, String messageBody) {
-        User sender = checkIfUserExistsInDataBaseElseThrowException(senderId, "Sender does not exist");
-        User receiver = checkIfUserExistsInDataBaseElseThrowException(receiverId, "Message receiver does not exist");
+        User sender = checkIfUserExistsInDataBaseByIdElseThrowException(senderId, "Sender does not exist");
+        User receiver = checkIfUserExistsInDataBaseByIdElseThrowException(receiverId, "Message receiver does not exist");
 
         if (!receiver.getFriendList().contains(senderId)){
-            throw new UnSupportedActionException("Cannot send message to someone who isn't a friend");
+            throw new UnSupportedActionException("Cannot dispatchFriendRequests message to someone who isn't a friend");
         }
-        Message chatMessage = new ChatMessage(sender.getName(), senderId, receiverId,messageBody);
-        updateSenderSentMessages(sender, receiverId, chatMessage);
-        MessageDispatcher chatMessageDispatcher = new ChatMessageDispatcher();
-        chatMessageDispatcher.send(receiver, chatMessage);
+        messageService.createChatMessageAndDispatch(sender, receiver,messageBody);
     }
 
-    private void updateSenderSentMessages(User sender, String receiverId, Message chatMessage) {
-        Map<String, List<Message>> senderSentMessages = sender.getSentMessages();
-        if (senderSentMessages.containsKey(receiverId)){
-            senderSentMessages.get(receiverId).add(chatMessage);
-        }
-        else {
-            senderSentMessages.put(receiverId, Arrays.asList(chatMessage));
-        }
+    void acceptFriendRequest(FriendRequest friendRequest){
+        User friendRequestRecipient = checkIfUserExistsInDataBaseByIdElseThrowException(friendRequest.getReceiverId()
+                ,"No friend Request receiver found!");
+        User friendRequestSender = checkIfUserExistsInDataBaseByIdElseThrowException(friendRequest.getSenderId() ,"No" +
+                " friend Request receiver found!");
+        friendRequestService.acceptFriendRequests(friendRequestSender, friendRequestRecipient, friendRequest);
     }
 
-    void acceptFriendRequest(FriendRequest requestObject){
-       User user = userDatabase.findById(requestObject.getReceiverId()).orElseThrow(()->
-               new UserException("No friend Request receiver found!"));
-       user.getFriendList().add(requestObject.getSenderId());
-        matchFriends(requestObject);
-        user.getFriendRequests().remove(requestObject);
-    }
     void rejectFriendRequest(FriendRequest requestObject){
-        User user = userDatabase.findById(requestObject.getReceiverId()).orElseThrow(()->
-                new UserException("No friend Request receiver found!"));
+        User user = checkIfUserExistsInDataBaseByIdElseThrowException(requestObject.getReceiverId(),
+                "No friend Request receiver found!");
         user.getFriendRequests().remove(requestObject);
     }
-    public void matchFriends(FriendRequest requestObject) {
-        User sender = userDatabase.findById(requestObject.getSenderId()).orElseThrow(()-> new UserException(
-                "sender does not exist"));
-        sender.getFriendList().add(requestObject.getReceiverId());
+
+    public Chatroom createChatRoom(String adminId, String ...memberIds) {
+        return new Chatroom(adminId,memberIds);
     }
 
     private static class UserServiceSingletonHelper {

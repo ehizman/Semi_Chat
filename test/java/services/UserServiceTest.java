@@ -4,11 +4,12 @@ import exceptions.FriendRequestException;
 import exceptions.UnSupportedActionException;
 import exceptions.UserException;
 import exceptions.UserLoginException;
+import models.Chatroom;
 import models.User;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import repository.UserDatabaseImpl;
+import repository.DatabaseImpl;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,13 +18,13 @@ import static org.assertj.core.api.Assertions.*;
 
 class UserServiceTest {
     private UserService userService;
-    private UserDatabaseImpl<User> userDatabase;
+    private DatabaseImpl<User> userDatabase;
 
     @BeforeEach
     @SuppressWarnings("unchecked")
     public void setUp(){
         userService = UserService.getInstance();
-        userDatabase = (UserDatabaseImpl<User>) UserDatabaseImpl.getInstance();
+        userDatabase = (DatabaseImpl<User>) DatabaseImpl.getInstance();
     }
 
     @Test
@@ -158,6 +159,16 @@ class UserServiceTest {
         userService.sendFriendRequest(sender.getId(), receiver.getId());
         userService.acceptFriendRequest(receiver.getFriendRequests().get(0));
         assertThatThrownBy(()-> userService.sendFriendRequest(sender.getId(), receiver.getId())).isInstanceOf(FriendRequestException.class);
+    }
+
+    @Test
+    void test_ThatUserCanCreateChatRoom(){
+        User sender = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com", "Jesus123");
+        User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com", "Jesus123");
+        String adminId = sender.getId();
+        String firstMemberId = receiver.getId();
+        Chatroom chatroom = userService.createChatRoom(adminId, firstMemberId);
+        assertThat(chatroom.getMembers().contains(firstMemberId)).isTrue();
     }
 
     @AfterEach
