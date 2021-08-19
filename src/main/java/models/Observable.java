@@ -4,5 +4,5 @@ public interface Observable {
 
     public void register(String userId);
     public void removeObserver(String userId);
-    public void broadcast(Message<ChatMessage> message);
+    public void broadcast(Message message);
 }

@@ -26,7 +26,7 @@ public class Chatroom implements Observable{
     }
 
     @Override
-    public void broadcast(Message<ChatMessage> chatMessage) {
+    public void broadcast(Message chatMessage) {
 
     }
 }

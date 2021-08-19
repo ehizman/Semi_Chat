@@ -1,5 +1,6 @@
 package models;
 
+import exceptions.FriendRequestException;
 import exceptions.UserException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,11 +8,9 @@ import org.junit.jupiter.api.Test;
 import repository.UserDatabaseImpl;
 import services.UserService;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserTest {
@@ -66,57 +65,12 @@ class UserTest {
     }
 
     @Test
-    void test_UserCanSendFriendRequests(){
-        User user = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com", "Jesus123");
-        User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com", "Jesus123");
-        userService.sendFriendRequest(user.getId(), receiver.getId());
-        assertThat(receiver.getFriendRequests().size()).isEqualTo(1);
-        int year = LocalDateTime.now().getYear();
-        int month = LocalDateTime.now().getMonthValue();
-        int day = LocalDateTime.now().getDayOfMonth();
-        int hour = LocalDateTime.now().getHour();
-        int minute = LocalDateTime.now().getMinute();
-        String formattedTime = String.format("%d-%d-%d:%02d:%02d",year, month, day, hour, minute);
-        assertThat(receiver.readMessage(0)).contains("You have received a friend request from ESEOSA " +
-                        "MAGUL at "+ formattedTime);
-    }
-
-    @Test
-    void test_ThatUserCanAcceptFriendRequestsAndAddFriends(){
-        User sender = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com", "Jesus123");
-        User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com", "Jesus123");
-        userService.sendFriendRequest(sender.getId(), receiver.getId());
-        receiver.handleRequests(receiver.getFriendRequests().get(0), RequestStatus.ACCEPTED);
-        assertThat(receiver.getId()).isIn(sender.getFriendList());
-        assertThat(sender.getId()).isIn(receiver.getFriendList());
-    }
-
-    @Test
-    void test_ThatUserCanRejectFriendRequest(){
-        User sender = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com", "Jesus123");
-        User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com", "Jesus123");
-        userService.sendFriendRequest(sender.getId(), receiver.getId());
-        receiver.handleRequests(receiver.getFriendRequests().get(0), RequestStatus.REJECTED);
-        assertThat(receiver.getFriendList()).doesNotContain(sender.getId());
-        assertThat(receiver.getFriendList()).isEmpty();
-    }
-
-    @Test
-    void test_ThatUserCanFindAnotherUserBySupplyingANamePattern(){
-        User firstUser = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com", "Jesus123");
-        User secondUser = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com",
-                "Jesus123");
-        List<User> usersThatMatchNamePattern = firstUser.search("Eseosa");
-        assertThat(usersThatMatchNamePattern).hasSameElementsAs(Arrays.asList(firstUser, secondUser));
-    }
-
-    @Test
     void test_ThatUserCannotSendRequestToTheSameUserTwice(){
         User sender = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com", "Jesus123");
         User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com", "Jesus123");
 
         userService.sendFriendRequest(sender.getId(), receiver.getId());
-        userService.sendFriendRequest(sender.getId(), receiver.getId());
+        assertThatThrownBy(()-> userService.sendFriendRequest(sender.getId(), receiver.getId())).isInstanceOf(FriendRequestException.class);
     }
 
     @AfterEach

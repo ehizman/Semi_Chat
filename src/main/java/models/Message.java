@@ -2,7 +2,7 @@ package models;
 
 
 
-public interface Message<E> {
+public interface Message {
 
     public String getSenderId();
 

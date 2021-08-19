@@ -4,5 +4,5 @@ import models.Message;
 import models.User;
 
 public interface MessageDispatcher {
-    void send(User receiver, Message<?> message);
+    void send(User receiver, Message message);
 }
