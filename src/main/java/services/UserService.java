@@ -2,32 +2,34 @@ package services;
 
 import dto.RegisterDto;
 import exceptions.FriendRequestException;
+import exceptions.UnSupportedActionException;
 import exceptions.UserException;
 import exceptions.UserLoginException;
 import lombok.Getter;
-import models.Message;
-import models.Native;
-import models.RequestStatus;
-import models.User;
+import models.*;
 import repository.Database;
-import repository.UserDatabaseImpl;
+import repository.DatabaseImpl;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class UserService {
     @Getter
     private final Database<User> userDatabase;
+    private final MessageService messageService;
+    private final FriendRequestService friendRequestService;
+    private final ChatroomService chatroomService;
 
     @SuppressWarnings("unchecked")
     private UserService(){
-        this.userDatabase = (Database<User>) UserDatabaseImpl.getInstance();
+        this.userDatabase =(Database<User>) DatabaseImpl.getInstance();
+        this.messageService = new MessageService();
+        this.friendRequestService = new FriendRequestService();
+        this.chatroomService = new ChatroomService();
     }
 
     public  User registerNative(String firstName, String lastName, String email, String password) {
         userDatabase.checkEmail(email);
         userDatabase.addNewEmail(email);
-
         RegisterDto registerDto = prettify(firstName, lastName, email,password);
         User user = new Native(registerDto.getFirstName(), registerDto.getLastName(), registerDto.getEmail(),
                 registerDto.getPassword());
@@ -39,8 +41,14 @@ public class UserService {
         firstName = firstName.toUpperCase();
         lastName = lastName.toUpperCase();
         email = email.toLowerCase();
-        RegisterDto registerDto = new RegisterDto(firstName, lastName, email, password);
-        return registerDto;
+        return new RegisterDto(firstName, lastName, email, password);
+    }
+
+    public void logout(User user) {
+        if (!user.isLoggedIn()){
+            throw new UserLoginException("You are already logged out");
+        }
+        user.setLoggedIn(false);
     }
 
     public List<User> find(String namePattern) {
@@ -48,27 +56,26 @@ public class UserService {
     }
 
     public void sendFriendRequest(String senderId, String receiverId) {
-        User sender = userDatabase.findById(senderId).orElseThrow(()-> new FriendRequestException("Friend request " +
-                "sender does not exist"));
+        User sender = checkIfUserExistsInDataBaseByIdElseThrowException(senderId, "Friend request " +
+                "sender does not exist");
 
-        String senderName = sender.getName();
+        User receiver = checkIfUserExistsInDataBaseByIdElseThrowException(receiverId, "Friend request receiver " +
+                "id does not exist");
 
-        User receiver = userDatabase.findById(receiverId).orElseThrow(()-> new FriendRequestException("Friend request receiver id does not exist"));
+        if (sender.getFriendList().contains(receiverId)){
+            throw new FriendRequestException("Receiver is already a friend");
+        }
 
-        RequestObject requestObject = new RequestObject(senderName, senderId, receiverId);
-
-        sendFriendRequest(requestObject, receiver);
+        for (Message friendRequest: receiver.getFriendRequests()) {
+            if (friendRequest.getReceiverId().equals(receiverId)) {
+                throw new FriendRequestException("Friend request has been sent already!");
+            }
+        }
+        friendRequestService.createFriendRequestAndDispatch(sender, receiver);
     }
 
-    private void sendFriendRequest(RequestObject requestObject, User receiver) {
-        FriendRequestDispatcher friendRequestDispatcher = new FriendRequestDispatcher();
-        friendRequestDispatcher.send(receiver, requestObject);
-    }
-
-    public void matchFriends(Message<RequestObject> requestObject) {
-        User sender = userDatabase.findById(requestObject.getSenderId()).orElseThrow(()-> new UserException(
-                "sender does not exist"));
-        sender.getFriendList().add(requestObject.getReceiverId());
+    private User checkIfUserExistsInDataBaseByIdElseThrowException(String senderId, String exceptionMessage) {
+        return userDatabase.findById(senderId).orElseThrow(() -> new FriendRequestException(exceptionMessage));
     }
 
     public boolean isValidLogin(String email, String password) {
@@ -81,38 +88,63 @@ public class UserService {
         }
     }
 
+    public void login(String email, String password) {
+        if(isValidLogin(email, password)){
+            User user = userDatabase.findByEmail(email).orElseThrow(()->new UserLoginException("No record found"));
+            user.setLoggedIn(true);
+        }
+    }
+
+    public void sendChatMessage(String senderId, String receiverId, String messageBody) {
+        User sender = checkIfUserExistsInDataBaseByIdElseThrowException(senderId, "Sender does not exist");
+        User receiver = checkIfUserExistsInDataBaseByIdElseThrowException(receiverId, "Message receiver does not exist");
+
+        if (!receiver.getFriendList().contains(senderId)){
+            throw new UnSupportedActionException("Cannot dispatchFriendRequests message to someone who isn't a friend");
+        }
+        messageService.createChatMessageAndDispatch(sender, receiver,messageBody);
+    }
+
+    void acceptFriendRequest(FriendRequest friendRequest){
+        User friendRequestRecipient = checkIfUserExistsInDataBaseByIdElseThrowException(friendRequest.getReceiverId()
+                ,"No friend Request receiver found!");
+        User friendRequestSender = checkIfUserExistsInDataBaseByIdElseThrowException(friendRequest.getSenderId() ,"No" +
+                " friend Request receiver found!");
+        friendRequestService.acceptFriendRequests(friendRequestSender, friendRequestRecipient, friendRequest);
+    }
+
+    void rejectFriendRequest(FriendRequest requestObject){
+        User user = checkIfUserExistsInDataBaseByIdElseThrowException(requestObject.getReceiverId(),
+                "No friend Request receiver found!");
+        user.getFriendRequests().remove(requestObject);
+    }
+
+    public String createChatRoom(String adminId, String groupName, String...memberIds){
+       String chatRoomId =  chatroomService.createNewChatRoom(adminId, groupName, memberIds);
+       User admin = checkIfUserExistsInDataBaseByIdElseThrowException(adminId, "User does not exist!");
+       admin.getChatRooms().add(chatRoomId);
+       for(String id : memberIds){
+           User user = checkIfUserExistsInDataBaseByIdElseThrowException(id,"User does not exist");
+           user.getChatRooms().add(chatRoomId);
+       }
+       return chatRoomId;
+    }
+
+    public ChatMessage broadcastMessage(String chatRoomId, String senderId, String message) {
+        User sender = checkIfUserExistsInDataBaseByIdElseThrowException(senderId, "User does not exist in database");
+        if(!sender.getChatRooms().contains(chatRoomId)){
+            throw new UnSupportedActionException("You are no longer a part of this group!");
+        }
+        ChatMessage chatMessage = messageService.createNewChatMessage(sender.getName(), senderId, chatRoomId, message);
+        chatroomService.broadcast(chatRoomId,chatMessage);
+        return chatMessage;
+    }
+
     private static class UserServiceSingletonHelper {
         private static final UserService instance = new UserService();
     }
 
     public static UserService getInstance(){
         return UserServiceSingletonHelper.instance;
-    }
-
-    private final static class RequestObject implements Message<RequestObject>{
-        private final String senderName;
-        @Getter
-        private final String senderId;
-        @Getter
-        private final String receiverId;
-        private final LocalDateTime timeSent;
-        @Getter
-        private final RequestStatus requestStatus = RequestStatus.PENDING;
-        
-        private RequestObject(String senderName, String senderId, String receiverId){
-            this.senderName = senderName;
-            this.timeSent = LocalDateTime.now();
-            this.senderId = senderId;
-            this.receiverId = receiverId;
-        }
-
-        public String toString(){
-            int year = timeSent.getYear();
-            int month = timeSent.getMonthValue();
-            int day = timeSent.getDayOfMonth();
-            int hour = timeSent.getHour();
-            int minute = timeSent.getMinute();
-            return String.format("You have received a friend request from %s at %s", senderName, String.format("%d-%d-%d:%02d:%02d",year, month, day, hour, minute));
-        }
     }
 }
