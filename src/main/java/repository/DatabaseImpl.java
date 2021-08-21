@@ -63,16 +63,6 @@ public class DatabaseImpl<K extends Storable> implements Database<K>{
         return Optional.empty();
     }
 
-    @Override
-    public Optional<K> findByName(String suppliedInput) {
-        for(K k : dataStore){
-            if(k.getName().contains(suppliedInput.toUpperCase())){
-                return Optional.of(k);
-            }
-        }
-        return Optional.empty();
-    }
-
     //implemented for the sole purpose of clearing the database after each test
     @Override
     public void deleteAll() {
@@ -103,6 +93,18 @@ public class DatabaseImpl<K extends Storable> implements Database<K>{
             }
         }
         return Optional.empty();
+    }
+
+    @Override
+    public Optional<List<K>> findAllMembersThatBelongToGroupWithThisId(String id) {
+        List<User> listOfUsersThatBelongToChatRoom = new ArrayList<>();
+        for (K k: dataStore) {
+            User user = (User)k;
+            if (user.getChatRooms().contains(id)){
+                listOfUsersThatBelongToChatRoom.add(user);
+            }
+        }
+        return Optional.of((List<K>) listOfUsersThatBelongToChatRoom);
     }
 
     private static class UserDatabaseImplSingletonHelper{

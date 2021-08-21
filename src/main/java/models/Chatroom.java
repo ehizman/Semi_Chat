@@ -6,24 +6,25 @@ import lombok.Getter;
 
 import java.util.*;
 
-@Data
 public class Chatroom implements Observable{
     @Getter
     Set<String> members;
     @Getter
     String groupId = UUID.randomUUID().toString();
-    private List<String> admins;
+    private final Set<String> admins;
+    private String groupName;
 
-    public Chatroom(String adminId, String ...members){
+    public Chatroom(String adminId, String groupName, String... members){
         this.members = new HashSet<>();
         this.members.addAll(Arrays.asList(members));
-        this.admins = new ArrayList<>(3);
+        this.admins = new HashSet<>();
         this.admins.add(adminId);
+        this.groupName = groupName;
     }
 
     @Override
-    public void subscribe(String userId) {
-        members.add(userId);
+    public void subscribe(String... userIds) {
+        members.addAll(List.of(userIds));
     }
 
     @Override

@@ -8,6 +8,11 @@ import java.util.List;
 import java.util.Map;
 
 public class MessageService {
+
+    public ChatMessage createNewChatMessage(String senderName, String senderId, String receiverId, String messageBody){
+        return new  ChatMessage(senderName, senderId, receiverId, messageBody);
+    }
+
     public void createChatMessageAndDispatch(User sender, User receiver, String messageBody) {
         ChatMessage chatMessage = new  ChatMessage(sender.getName(), sender.getId(), receiver.getId(), messageBody);
         dispatchMessages(sender, receiver, chatMessage);

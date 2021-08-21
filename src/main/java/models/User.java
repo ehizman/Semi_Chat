@@ -8,6 +8,7 @@ import java.util.*;
 
 @Data
 public abstract class User implements Storable {
+    private List<Message> chatRoomInbox = new ArrayList<>();
     private String firstName;
     private String lastName;
     private String email;
@@ -20,6 +21,7 @@ public abstract class User implements Storable {
     private String profile;
     Map<String, List<Message>> inbox = new HashMap<>();
     Map<String, List<Message>> sentMessages = new HashMap<>();
+    List<String> chatRooms = new ArrayList<>();
 
     public User(String firstName, String lastName, String email, String password) {
         this.firstName = firstName;

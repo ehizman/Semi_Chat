@@ -17,12 +17,14 @@ public class UserService {
     private final Database<User> userDatabase;
     private final MessageService messageService;
     private final FriendRequestService friendRequestService;
+    private final ChatroomService chatroomService;
 
     @SuppressWarnings("unchecked")
     private UserService(){
         this.userDatabase =(Database<User>) DatabaseImpl.getInstance();
         this.messageService = new MessageService();
         this.friendRequestService = new FriendRequestService();
+        this.chatroomService = new ChatroomService();
     }
 
     public  User registerNative(String firstName, String lastName, String email, String password) {
@@ -117,8 +119,25 @@ public class UserService {
         user.getFriendRequests().remove(requestObject);
     }
 
-    public Chatroom createChatRoom(String adminId, String ...memberIds) {
-        return new Chatroom(adminId,memberIds);
+    public String createChatRoom(String adminId, String groupName, String...memberIds){
+       String chatRoomId =  chatroomService.createNewChatRoom(adminId, groupName, memberIds);
+       User admin = checkIfUserExistsInDataBaseByIdElseThrowException(adminId, "User does not exist!");
+       admin.getChatRooms().add(chatRoomId);
+       for(String id : memberIds){
+           User user = checkIfUserExistsInDataBaseByIdElseThrowException(id,"User does not exist");
+           user.getChatRooms().add(chatRoomId);
+       }
+       return chatRoomId;
+    }
+
+    public ChatMessage broadcastMessage(String chatRoomId, String senderId, String message) {
+        User sender = checkIfUserExistsInDataBaseByIdElseThrowException(senderId, "User does not exist in database");
+        if(!sender.getChatRooms().contains(chatRoomId)){
+            throw new UnSupportedActionException("You are no longer a part of this group!");
+        }
+        ChatMessage chatMessage = messageService.createNewChatMessage(sender.getName(), senderId, chatRoomId, message);
+        chatroomService.broadcast(chatRoomId,chatMessage);
+        return chatMessage;
     }
 
     private static class UserServiceSingletonHelper {

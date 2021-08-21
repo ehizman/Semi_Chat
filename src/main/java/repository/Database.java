@@ -19,11 +19,12 @@ public interface Database<K> {
 
         Optional<K> findById(String storableId);
 
-        Optional<K> findByName(String receiverBank);
 
         void deleteAll();//implemented for the sole purpose of clearing the database after each test
 
         Optional<List<K>> findAllByName(String namePattern);
 
         Optional<K> findByEmail(String email);
+
+        Optional<List<K>> findAllMembersThatBelongToGroupWithThisId(String id);
 }

@@ -4,7 +4,7 @@ import exceptions.FriendRequestException;
 import exceptions.UnSupportedActionException;
 import exceptions.UserException;
 import exceptions.UserLoginException;
-import models.Chatroom;
+import models.ChatMessage;
 import models.User;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -163,12 +163,24 @@ class UserServiceTest {
 
     @Test
     void test_ThatUserCanCreateChatRoom(){
-        User sender = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com", "Jesus123");
-        User receiver = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com", "Jesus123");
-        String adminId = sender.getId();
-        String firstMemberId = receiver.getId();
-        Chatroom chatroom = userService.createChatRoom(adminId, firstMemberId);
-        assertThat(chatroom.getMembers().contains(firstMemberId)).isTrue();
+        User admin = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com", "Jesus123");
+        User member = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com", "Jesus123");
+        String adminId = admin.getId();
+        String firstMemberId = member.getId();
+        String chatRoomId = userService.createChatRoom(adminId, "The place", firstMemberId);
+        assertThat(admin.getChatRooms().contains(chatRoomId)).isTrue();
+        assertThat(member.getChatRooms().contains(chatRoomId)).isTrue();
+    }
+
+    @Test
+    void test_ThatUSerCanSendMessagesToChatRoom(){
+        User admin = userService.registerNative("Eseosa", "Magul", "ehizman@gmail.com", "Jesus123");
+        User member = userService.registerNative("Eseosa", "Edemakhiota", "eseosaedemakhiota@gmail.com", "Jesus123");
+        String adminId = admin.getId();
+        String firstMemberId = member.getId();
+        String chatRoomId = userService.createChatRoom(adminId, "The place", firstMemberId);
+        ChatMessage chatMessage = userService.broadcastMessage(chatRoomId, firstMemberId, "Hello everyone");
+        assertThat(admin.getChatRoomInbox().contains(chatMessage)).isTrue();
     }
 
     @AfterEach
